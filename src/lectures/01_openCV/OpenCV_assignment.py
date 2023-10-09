@@ -1,80 +1,63 @@
 import numpy as np
+import cv2 as cv
+import skimage
+
 
 class ImageBGR:
 
     def __init__(self, file: str = None, image: np.ndarray = None):
-        if file:
-            self.__image = None  # load the image from file -- your code here
-        elif image:
-            self.__image = None # load the image from ndarray -- your code here
+        if file is not None:
+            self.__image = skimage.io.imread(file)
+        elif image is not None:
+            self.__image = image
         else:
-            raise AttributeError("") # add your code for the case of the error
-        
-    def gray(self) -> np.ndarray:
-        """
-        Returns the image in grayscale
-        """
-        
-        return None #your code here
-        
-    def lab(self) -> np.ndarray:
-        """
-        Returns the image in Lab color format
-        """
-       
-        return None #your code here
-    
-        
-    def rgb(self) -> np.ndarray:
-        """
-        Returns the image in RGB color format
-        """
+            raise AttributeError("Incorrect value")
 
-        return None #your code here
-        
+    def gray(self) -> np.ndarray:
+        return cv.cvtColor(self.__image, cv.COLOR_BGR2GRAY)
+
+    def lab(self) -> np.ndarray:
+        return cv.cvtColor(self.__image, cv.COLOR_BGR2LAB)
+
+    def rgb(self) -> np.ndarray:
+        return cv.cvtColor(self.__image, cv.COLOR_BGR2RGB)
+
     def bgr(self) -> np.ndarray:
-        """
-        Returns the image in BGR color format
-        """
-        
-        return None #your code here
-        
+        return cv.cvtColor(self.__image, cv.COLOR_RGB2BGR)
+
     def resize(self, width: int, height: int) -> 'ImageBGR':
-        """
-        Returns a new instance of ImageBGR class but with a new image shape that is gotten by OpenCV resize function
-        """
-                
-        return None #your code here
-        
+        resized_image = cv.resize(self.__image, (width, height))
+        new_instance = ImageBGR(image=resized_image)
+        return new_instance
+
     def rotate(self, angle: int, keep_ratio: bool) -> 'ImageBGR':
-        """
-        Returns a new instance of ImageBGR class containing the image from the original instance of the ImageBGR class but rotated by the given angle.
-        If keep_ratio is set to True, the new image must be the same size as the original. If set to False, the new image must contain the entire image information 
-        from the original image.
-        """
-        
-        return None #your code here
-        
-    def histogram(self): -> np.ndarray:
-        """
-        Returns the histogram of the image from its grayscale version.
-        """
-        
-        return None #your code here
-        
+        if keep_ratio:
+            (h, w) = self.__image.shape[:2]
+            (cX, cY) = (w // 2, h // 2)
+            M = cv.getRotationMatrix2D((cX, cY), angle, 1.0)  # center of operation, rotation, scale
+            return ImageBGR(image=cv.warpAffine(self.__image, M, (w, h)))
+
+        (h, w) = self.__image.shape[:2]
+        (cX, cY) = (w // 2, h // 2)
+        M = cv.getRotationMatrix2D((cX, cY), -45, 1.0)
+        cos = np.abs(M[0, 0])
+        sin = np.abs(M[0, 1])
+
+        nW = int((h * sin) + (w * cos))
+        nH = int((h * cos) + (w * sin))
+
+        M[0, 2] += (nW / 2) - cX
+        M[1, 2] += (nH / 2) - cY
+
+        return ImageBGR(image=cv.warpAffine(self.__image, M, (nW, nH)))
+
+    def histogram(self) -> np.ndarray:
+        return cv.calcHist([self.__image], [0], None, [256], [0, 256])
+
     @property
     def shape(self) -> tuple:
-        """
-        A function decorated as an attribute that returns the dimensions of the stored image.
-        """
-        
-        return (None, None, None) #your code here
-    
+        return self.__image.shape
+
     @property
     def size(self) -> int:
-        """
-        A function decorated as an attribute that returns the memory occupied by the image (purely the field in which the image is stored). 
-        """
-        
-        return None #your code here
-    
+        return self.__image.itemsize
