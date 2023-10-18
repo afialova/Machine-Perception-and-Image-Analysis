@@ -13,6 +13,8 @@ class ImageBGR:
         else:
             raise AttributeError("Incorrect value")
 
+    #There's a little mistake. Skimage.io loads the image in RGB, so to make it consistent you have to convert it.
+
     def gray(self) -> np.ndarray:
         return cv.cvtColor(self.__image, cv.COLOR_BGR2GRAY)
 
